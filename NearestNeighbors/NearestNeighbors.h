@@ -1,6 +1,9 @@
 #ifndef NEARESTNEIGHBORS_H_
 #define NEARESTNEIGHBORS_H_
 
+#include <vector>
+#include <thread>
+
 struct Point {
 	float x;
 	float y;
@@ -17,11 +20,13 @@ private:
 	int _image_width;
 	int _image_height;
 	int _number_of_points;
-	Point* _points;
-	Point** _pnearest_neighbor;
+	std::vector<Point*> _points;
+	std::vector<Point*> _pnearest_neighbor;
+	std::vector<std::thread> threads;
 
 	void map_nearest_neighbors_();
 	void find_nearest_neighbor_(Point* p, size_t point_index);
+	bool point_in_bounds_(Point* p);
 };
 
 #endif // !NEARESTNEIGHBORS_H_

@@ -3,41 +3,49 @@
 
 NearestNeighbors::NearestNeighbors(int image_width, int image_height, Point* points,
 	int number_of_points) : _image_width(image_width), _image_height(image_height),
-	_number_of_points(number_of_points), _points(points) {
+	_number_of_points(number_of_points) {
 
-	//Initialise array of pointers to the nearest neighbors.
-	_pnearest_neighbor = new Point*[_number_of_points];
-	for(size_t i = 0; i < _number_of_points; i++)
-		_pnearest_neighbor[i] = nullptr;
+	//Copy pointers to points into the _points vector
+	//Out of bound points changed to nullptr.
+	for (size_t i = 0; i < _number_of_points; i++)
+		_points.push_back(point_in_bounds_(&points[i]) ? &points[i] : nullptr); //Don't assign nullptr here.
+	
+	//Initialise vector of pointers to the nearest neighbors.
+	_pnearest_neighbor.assign(_number_of_points, nullptr);
 	
 	//Map pointers to the nearest neighbors of _points to the corresponding indexes in _pnearest_neighbor.
 	//All the heavy lifting is done here.
 	map_nearest_neighbors_();
 }
 
-NearestNeighbors::~NearestNeighbors() {
-	delete[] _pnearest_neighbor;
-}
+NearestNeighbors::~NearestNeighbors() {}
 
 Point* NearestNeighbors::getNearestPoint(Point* p) {
 	for (size_t i = 0; i < _number_of_points; i++)
-		if(p->x == _points[i].x && p->y == _points[i].y)
+		if(_points[i] != nullptr && p->x == _points[i]->x && p->y == _points[i]->y) //remove nullptr here.
 			return _pnearest_neighbor[i];
 	return nullptr;
 }
 
 void NearestNeighbors::map_nearest_neighbors_() {
-	//Naive implementation.
 	for (size_t i = 0; i < _number_of_points; i++)
-		//Only for points in bounds.
-		if(_points[i].x >= 0 && _points[i].x < _image_width
-			&& _points[i].y >= 0 && _points[i].y < _image_height)
-			find_nearest_neighbor_(&_points[i], i);
-	//Do threads.
+		if(point_in_bounds_(_points[i])) //It is bad to have points as nullptrs.
+			threads.push_back(std::thread(&NearestNeighbors::find_nearest_neighbor_, _points[i], i));
+
+	for (auto &thr: threads) {
+		thr.join();
+	}
 }
 
+//Must not modify any shared variables.
 void NearestNeighbors::find_nearest_neighbor_(Point* p, size_t point_index) {
-	
+	//Algorithm.
+	/*
+	* We have a point (1, 3). We have plane sizes (1024 x 480).
+	* From plane size we get a radius step ()
+	*
+	*/
+/*
 	//Naive implementation.
 	float dist = 0;
 	float shortest_dist = (float)_image_height * _image_width;
@@ -72,6 +80,12 @@ void NearestNeighbors::find_nearest_neighbor_(Point* p, size_t point_index) {
 			this->_pnearest_neighbor[point_index] = &_points[i];
 		}
 	}
-	
-	//Do circulation.
+*/	
+}
+
+bool NearestNeighbors::point_in_bounds_(Point* p) {
+	if (p->x < 0 || p->x >= this->_image_width
+		|| p->y < 0 || p->y >= this->_image_height)
+		return false;
+	return true;
 }
