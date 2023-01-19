@@ -6,31 +6,32 @@ NearestNeighbors::NearestNeighbors(int image_width, int image_height, Point* poi
 	_number_of_points(number_of_points) {
 
 	//Copy pointers to points into the _points vector
-	//Out of bound points changed to nullptr.
+	//Out of bound points ignored.
 	for (size_t i = 0; i < _number_of_points; i++)
-		_points.push_back(point_in_bounds_(&points[i]) ? &points[i] : nullptr); //Don't assign nullptr here.
+		if(this->point_in_bounds_(&points[i]))
+			this->_points.push_back(&points[i]);
 	
 	//Initialise vector of pointers to the nearest neighbors.
-	_pnearest_neighbor.assign(_number_of_points, nullptr);
+	//Must be an easier way
+	this->_pnearest_neighbor.assign(this->_number_of_points, nullptr);
 	
 	//Map pointers to the nearest neighbors of _points to the corresponding indexes in _pnearest_neighbor.
 	//All the heavy lifting is done here.
-	map_nearest_neighbors_();
+	this->map_nearest_neighbors_();
 }
 
 NearestNeighbors::~NearestNeighbors() {}
 
 Point* NearestNeighbors::getNearestPoint(Point* p) {
-	for (size_t i = 0; i < _number_of_points; i++)
-		if(_points[i] != nullptr && p->x == _points[i]->x && p->y == _points[i]->y) //remove nullptr here.
-			return _pnearest_neighbor[i];
+	for (size_t i = 0; i < this->_number_of_points; i++)
+		if(p == this->_points[i]) //It must be called in an easier way without looping through an array.
+			return this->_pnearest_neighbor[i];
 	return nullptr;
 }
 
 void NearestNeighbors::map_nearest_neighbors_() {
-	for (size_t i = 0; i < _number_of_points; i++)
-		if(point_in_bounds_(_points[i])) //It is bad to have points as nullptrs.
-			threads.push_back(std::thread(&NearestNeighbors::find_nearest_neighbor_, _points[i], i));
+	for (size_t i = 0; i < this->_number_of_points; i++)
+		threads.push_back(std::thread(&NearestNeighbors::find_nearest_neighbor_, this, this->_points[i], i));
 
 	for (auto &thr: threads) {
 		thr.join();

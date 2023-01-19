@@ -7,6 +7,7 @@
 struct Point {
 	float x;
 	float y;
+	Point* np;
 };
 
 class NearestNeighbors
@@ -20,8 +21,9 @@ private:
 	int _image_width;
 	int _image_height;
 	int _number_of_points;
-	std::vector<Point*> _points;
-	std::vector<Point*> _pnearest_neighbor;
+	std::vector<Point*> _points; //InBounds vector
+	//OutOfBounds vector //redundant
+	std::vector<Point*> _pnearest_neighbor; //find a way to map it via prev vector.
 	std::vector<std::thread> threads;
 
 	void map_nearest_neighbors_();
