@@ -7,7 +7,7 @@
 struct Point {
 	float x;
 	float y;
-	Point* np;
+	Point* pnearest_neighbor;
 };
 
 class NearestNeighbors
@@ -21,14 +21,17 @@ private:
 	int _image_width;
 	int _image_height;
 	int _number_of_points;
-	std::vector<Point*> _points; //InBounds vector
-	//OutOfBounds vector //redundant
-	std::vector<Point*> _pnearest_neighbor; //find a way to map it via prev vector.
+	std::vector<Point*> _points; //InBounds points vector
+	//std::vector<Point*> _pnearest_neighbor; //find a way to map it via prev vector.
 	std::vector<std::thread> threads;
 
-	void map_nearest_neighbors_();
-	void find_nearest_neighbor_(Point* p, size_t point_index);
-	bool point_in_bounds_(Point* p);
+	void map_nearest_neighbors();
+	void find_nearest_neighbor(Point* p, size_t point_index);
+	void fnn_linear(Point* p, size_t point_index);
+	void fnn_sector(Point* p, size_t point_index);
+	bool point_in_bounds(Point* p);
+	bool point_in_bounds(Point* p, const float min_x, const float max_x,
+		const float min_y, const float max_y);
 };
 
 #endif // !NEARESTNEIGHBORS_H_
