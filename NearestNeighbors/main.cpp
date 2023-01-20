@@ -7,6 +7,7 @@ using namespace std;
 
 void generate_rand_points(Point *points, int &n);
 void generate_points(Point* points, size_t size);
+void generate_int_points(Point* points, size_t size);
 
 int main()
 {
@@ -17,9 +18,9 @@ int main()
     int image_width = 4096;
     int image_height = 4096;
     clock_t time = 0;
-    generate_points(points, size);
+    generate_int_points(points, size);
 
-    for (size_t i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 2; i++) {
         cout << "************************************************************************************" << endl;
         cout << "Image " << i << ": (" << image_width << "x" << image_height << ") with "
             << size << " points generated." << endl;
@@ -43,6 +44,7 @@ int main()
         //image_width = rand() % 4097; //use these for random image sizes.
         //image_height = rand() % 4097;
         size = 4096;
+        //size = (long long)rand() % 4096 + 1;
         generate_points(points, size);
     }
     
@@ -62,5 +64,12 @@ void generate_points(Point* points, size_t size) {
     for (size_t i = 0; i < size; i++) {
         points[i].x = (float) (rand() % 4096 + (float)(rand() % 10000) / 10000);
         points[i].y = (float) (rand() % 4096 + (float)(rand() % 10000) / 10000);
+    }
+}
+
+void generate_int_points(Point* points, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        points[i].x = (int) (rand() % 10);
+        points[i].y = (int) (rand() % 10);
     }
 }
