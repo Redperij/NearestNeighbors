@@ -10,8 +10,7 @@ struct Point {
 	Point* pnearest_neighbor;
 };
 
-class NearestNeighbors
-{
+class NearestNeighbors {
 public:
 	NearestNeighbors(int image_width, int image_height, Point* points,
 		int number_of_points);
