@@ -23,7 +23,7 @@ private:
 	const int _points_per_thread;
 	const int _sector_algorithm_threshold;
 	//Coefficient to use for determining sector and step size.
-	const float _image_sector_div_coef;
+	float _image_sector_div_coef;
 	std::vector<Point*> _points; //InBounds points vector
 	std::vector<std::thread> threads;
 

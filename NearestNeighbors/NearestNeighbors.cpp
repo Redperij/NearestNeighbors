@@ -272,11 +272,11 @@ NearestNeighbors::fnn_sector (Point* p)
 	//Ideally, whole while loop should run only once for every point,
 	//this will allow to significantly decrease number of computations.
 	while (sector_half_width
-		   < (width_longer ? this->_image_width : this->_image_height)) {
-		x_min = p->x - step;
-		x_max = p->x + step;
-		y_min = p->y - step;
-		y_max = p->y + step;
+		   <= (width_longer ? this->_image_width : this->_image_height)) {
+		x_min = p->x - sector_half_width;
+		x_max = p->x + sector_half_width;
+		y_min = p->y - sector_half_width;
+		y_max = p->y + sector_half_width;
 		
 		//This loop checks which points were caught by square constraint.
 		//It might end up increasing number of computations if points
