@@ -141,9 +141,13 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NearestNeighbors.cpp" />
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="UniqueRngPoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NearestNeighbors.h" />
+    <ClInclude Include="test.h" />
+    <ClInclude Include="UniqueRngPoint.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
