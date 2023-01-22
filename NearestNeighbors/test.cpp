@@ -12,30 +12,39 @@ int run_tests() {
     Point* points = new Point[4096];
     int tests_failed = 0;
 
+    //Example of test usage.
     tests_failed += run_test_with_valid_points(points, 10, 10, 10, "[Simple valid 10x10]: ");
     tests_failed += run_test(points, 4096, 4096, 4096, "[General 4096 4096x4096]: ");
     tests_failed += run_test_with_valid_points(points, 4096, 4096, 4096, "[Valid 4096 4096x4096]: ");
     tests_failed += run_test_with_valid_points(points, 4096, 1, 1, "[Tightly together]: ");
     tests_failed += run_test(points, 4096, 1, 1, "[Lots of invalid]: ");
     
+    //Example of custom test.
     generate_valid_unique_points(points, 4095, 1, 1);
     points[4095].x = 4095;
     points[4095].y = 4095;
 
-    tests_failed += run_custom_test(points, 4096, 4096, 4096, "[Isolated point]");
+    tests_failed += run_custom_test(points, 4096, 4096, 4096, "[Tight cluster]: ");
+
+
+    //Example 2 of custom test.
+    generate_valid_unique_points(points, 2000, 1, 1);
+    generate_valid_unique_points(&points[2000], 2096, 4096, 4096);
+
+    tests_failed += run_custom_test(points, 4096, 4096, 4096, "[Half in tight cluster]: ");
 
     delete[] points;
-    return 0;
+    return tests_failed;
 }
 
 /**
- * @brief Generates array of valid unique points and runs test.
+ * @brief Generates array of random valid unique points and runs test.
  * 
  * @param points Pointer to the allocated memory to use.
  * @param size Amount of points to generate.
  * @param image_width Image width.
  * @param image_height Image height.
- * @param test_name Test name formatted as "[TEST_NAME] ".
+ * @param test_name Test name formatted as "[TEST_NAME]: ".
  * @return int 1 - test failed. 0 - test succeeded. 
  */
 int run_test_with_valid_points(Point* points, int size, int image_width,
@@ -45,13 +54,13 @@ int run_test_with_valid_points(Point* points, int size, int image_width,
 }
 
 /**
- * @brief Generates array of unique points and runs test.
+ * @brief Generates array of random unique points and runs test.
  * 
  * @param points Pointer to the allocated memory to use.
  * @param size Amount of points to generate.
  * @param image_width Image width.
  * @param image_height Image height.
- * @param test_name Test name formatted as "[TEST_NAME] ".
+ * @param test_name Test name formatted as "[TEST_NAME]: ".
  * @return int 1 - test failed. 0 - test succeeded. 
  */
 int run_test(Point* points, int size, int image_width, int image_height,
@@ -61,13 +70,13 @@ int run_test(Point* points, int size, int image_width, int image_height,
 }
 
 /**
- * @brief Runs test with received set of points.
+ * @brief Runs test with received set of points. (No nullptr check for "points"!)
  * 
  * @param points Set of initialised unique points.
  * @param size Size of an array of points.
  * @param image_width Image width (x).
  * @param image_height Image height (y).
- * @param test_name Test name formatted as "[TEST_NAME] ".
+ * @param test_name Test name formatted as "[TEST_NAME]: ".
  * @return int 1 - test failed. 0 - test succeeded.
  */
 int run_custom_test(Point* points, int size, int image_width,
@@ -87,14 +96,14 @@ int run_custom_test(Point* points, int size, int image_width,
     NearestNeighbors nb(image_width, image_height, points, size);
     time = clock() - time;
     total_time += time;
-    cout << test_name << "Object initialised for " << time << " ms." << endl;
+    cout << test_name << "Object initialised for " << time << " clock ticks." << endl;
 
     time = clock();
     for (size_t i = 0; i < size; i++)
         obj_neighbors[i] = nb.getNearestPoint(&points[i]);
     time = clock() - time;
     total_time += time;
-    cout << test_name << "Object found neighbors for " << time << " ms." << endl;
+    cout << test_name << "Object found neighbors for " << time << " clock ticks." << endl;
 
     time = clock();
     for (size_t i = 0; i < size; i++) {
@@ -104,27 +113,27 @@ int run_custom_test(Point* points, int size, int image_width,
             check_neighbors[i] = nullptr;
     }
     time = clock() - time;
-    cout << test_name << "Check found neighbors for " << time << " ms." << endl;
+    cout << test_name << "Check found neighbors for " << time << " clock ticks." << endl;
 
     for (size_t i = 0; i < size; i++) {
         if (obj_neighbors[i] != check_neighbors[i]) {
             if(obj_neighbors[i] != nullptr && check_neighbors[i] != nullptr) {
                 cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y
-                     << ") has different neighbors.\n\tObject neighbor: ("
-                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n\t\
+                     << ") has different neighbors.\nObject neighbor: ("
+                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n\
                      Test neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y << ")" << endl;
                 missmatch_count++;
             }
             else if (obj_neighbors[i] != nullptr) {
                 cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y <<
-                     ") has different neighbors.\n\tObject neighbor: ("
-                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n\t\
+                     ") has different neighbors.\nObject neighbor: ("
+                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n\
                      Test neighbor  : Gave a nullptr" << endl;
                 missmatch_count++;
             }
             else {
                 cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y <<
-                     ") has different neighbors.\n\tObject neighbor: Gave a nullptr\n\t\
+                     ") has different neighbors.\nObject neighbor: Gave a nullptr\n\
                      Test neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y << ")" << endl;
                 missmatch_count++;
             }
@@ -135,11 +144,11 @@ int run_custom_test(Point* points, int size, int image_width,
     if (missmatch_count) {
         res = 1;
         cout << test_name << "Test completed with errors.\nTotal time spent: "
-        << total_time << " ms" << endl;
+        << total_time << " clock ticks" << endl;
     }
     else
         cout << test_name << "Test successful.\nTotal time spent: "
-        << total_time << " ms" << endl;
+        << total_time << " clock ticks" << endl;
 
     delete[] obj_neighbors;
     delete[] check_neighbors;
