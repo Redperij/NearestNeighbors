@@ -17,6 +17,6 @@ main()
         cout << "All tests succeeded." << endl;
     else
         cout << failed_tests << " tests failed." << endl;
-    
+    system("PAUSE");
     return 0;
 }

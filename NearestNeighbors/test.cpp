@@ -2,6 +2,8 @@
 #include "test.h"
 #include "UniqueRngPoint.h"
 
+#define TEST_CORRECTNESS 1
+
 using namespace std;
 
 /**
@@ -106,6 +108,7 @@ int run_custom_test(Point* points, int size, int image_width,
     total_time += time;
     cout << test_name << "Object found neighbors for " << time << " clock ticks." << endl;
 
+#if TEST_CORRECTNESS
     time = clock();
     for (size_t i = 0; i < size; i++) {
         if (point_in_bounds(&points[i], image_width, image_height))
@@ -141,7 +144,8 @@ int run_custom_test(Point* points, int size, int image_width,
             
         }
     }
-    
+#endif
+
     if (missmatch_count) {
         res = 1;
         cout << test_name << "Test completed with errors.\nTotal time spent: "
