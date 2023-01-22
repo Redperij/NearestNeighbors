@@ -120,21 +120,21 @@ int run_custom_test(Point* points, int size, int image_width,
             if(obj_neighbors[i] != nullptr && check_neighbors[i] != nullptr) {
                 cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y
                      << ") has different neighbors.\nObject neighbor: ("
-                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n\
-                     Test neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y << ")" << endl;
+                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n"
+                     "Test neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y << ")" << endl;
                 missmatch_count++;
             }
             else if (obj_neighbors[i] != nullptr) {
                 cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y <<
                      ") has different neighbors.\nObject neighbor: ("
-                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n\
-                     Test neighbor  : Gave a nullptr" << endl;
+                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n"
+                     "Test neighbor  : Gave a nullptr" << endl;
                 missmatch_count++;
             }
             else {
                 cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y <<
-                     ") has different neighbors.\nObject neighbor: Gave a nullptr\n\
-                     Test neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y << ")" << endl;
+                     ") has different neighbors.\nObject neighbor: Gave a nullptr\n"
+                     "Test neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y << ")" << endl;
                 missmatch_count++;
             }
             

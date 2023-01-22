@@ -4,13 +4,15 @@
 using namespace std;
 
 
-int main()
+int
+main()
 {
     cout << "Started." << endl;
 
     int failed_tests = run_tests();
 
-    cout << "\n\n##############################################################" <<endl;
+    cout << "\n\n############################"
+            "##################################" <<endl;
     if(!failed_tests)
         cout << "All tests succeeded." << endl;
     else

@@ -129,6 +129,9 @@ NearestNeighbors::find_set_of_nearest_neighbors (size_t start, size_t end)
  * @brief Determines which algorithm to use to find nearest neighbor of point.
  * @par Limitations
  * Must not use any shared variables without mutex.
+ * @par Comments
+ * Previously it switched between linear and sector algoritms, but sector algorithm
+ * appeared to be too slow and hard to implement, thus it was deleted.
  * 
  * @param p Point to find a nearest neighbor for.
  */
