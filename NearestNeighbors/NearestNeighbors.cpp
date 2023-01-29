@@ -273,6 +273,7 @@ NearestNeighbors::fnn_sector (Point* p)
 	float max_radius = (float)this->_image_width + this->_image_height;
 	float radius = step;
 	std::vector<Point*> points_in_bounds;
+	points_in_bounds.reserve(this->_number_of_points);
 	float x_min, x_max, y_min, y_max;
 
 	//Worst case is _image_sector_div_coef runs for one point. (Isolated point)
@@ -304,6 +305,8 @@ NearestNeighbors::fnn_sector (Point* p)
 				p->pnearest_neighbor = candidate;
 				break;
 			}
+
+			points_in_bounds.clear();
 		}
 		radius += step;
 	}
