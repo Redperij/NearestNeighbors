@@ -1,4 +1,6 @@
 #include <cmath>
+#include <chrono>
+#include <iomanip>
 #include "test.h"
 #include "UniqueRngPoint.h"
 
@@ -88,36 +90,43 @@ int run_custom_test(Point* points, int size, int image_width,
     vector<Point*> check_points;
     Point** obj_neighbors = new Point*[size];
     Point** check_neighbors = new Point*[size];
-    clock_t time = 0;
-    clock_t total_time = 0;
+
+    chrono::steady_clock::time_point start;
+    chrono::steady_clock::time_point end;
+    chrono::duration<double> time;
+    chrono::duration<double> total_time(0);
+
     size_t missmatch_count = 0;
     
     for (size_t i = 0; i < size; i++)
         check_points.push_back(&points[i]);
 
-    time = clock();
+    start = chrono::steady_clock::now();
     NearestNeighbors nb(image_width, image_height, points, size);
-    time = clock() - time;
+    end = chrono::steady_clock::now();
+    time = end - start;
     total_time += time;
-    cout << test_name << "Object initialised for " << time << " clock ticks." << endl;
+    cout << test_name << "Object initialised for " << time.count() * 1000 << " ms." << endl;
 
-    time = clock();
+    start = chrono::steady_clock::now();
     for (size_t i = 0; i < size; i++)
         obj_neighbors[i] = nb.getNearestPoint(&points[i]);
-    time = clock() - time;
+    end = chrono::steady_clock::now();
+    time = end - start;
     total_time += time;
-    cout << test_name << "Object found neighbors for " << time << " clock ticks." << endl;
+    cout << test_name << "Object found neighbors for " << time.count() * 1000 << " ms." << endl;
 
 #if TEST_CORRECTNESS
-    time = clock();
+    start = chrono::steady_clock::now();
     for (size_t i = 0; i < size; i++) {
         if (point_in_bounds(&points[i], image_width, image_height))
             check_neighbors[i] = shortest_dist(check_points[i], check_points);
         else
             check_neighbors[i] = nullptr;
     }
-    time = clock() - time;
-    cout << test_name << "Check found neighbors for " << time << " clock ticks." << endl;
+    end = chrono::steady_clock::now();
+    time = end - start;
+    cout << test_name << "Check found neighbors for " << time.count() * 1000 << " ms." << endl;
 
     for (size_t i = 0; i < size; i++) {
         if (obj_neighbors[i] != check_neighbors[i]) {
@@ -149,11 +158,11 @@ int run_custom_test(Point* points, int size, int image_width,
     if (missmatch_count) {
         res = 1;
         cout << test_name << "Test completed with errors.\nTotal time spent: "
-        << total_time << " clock ticks" << endl;
+        << total_time.count() * 1000 << " ms" << endl;
     }
     else
         cout << test_name << "Test successful.\nTotal time spent: "
-        << total_time << " clock ticks" << endl;
+        << total_time.count() * 1000 << " ms" << endl;
 
     delete[] obj_neighbors;
     delete[] check_neighbors;
