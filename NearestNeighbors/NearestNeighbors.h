@@ -32,7 +32,8 @@ private:
 	void find_set_of_nearest_neighbors (size_t start, size_t end);
 	void find_nearest_neighbor (Point* p);
 	void fnn_linear (Point* p);
-	void fnn_linear (Point* p, std::vector<Point*> &points);
+	Point* fnn_sector_linear (Point* p, std::vector<Point*> &points,
+							  const float radius);
 	void fnn_sector (Point* p);
 	bool point_in_bounds (Point* p);
 	bool point_in_bounds (Point* p, const float min_x, const float max_x,

@@ -69,6 +69,7 @@ void
 NearestNeighbors::map_nearest_neighbors ()
 {
 	size_t supported_threads = std::thread::hardware_concurrency ();
+	//supported_threads = 0;
 
 	//If we cannot determine ammount of threads on the CPU,
 	//it's better not to risk.
@@ -116,7 +117,7 @@ NearestNeighbors::map_nearest_neighbors ()
  * @par Limitations
  * Must not use any shared variables without mutex.
  * 
- * @param start starting poin index.
+ * @param start starting point index.
  * @param end last point index + 1.
  */
 void
@@ -207,10 +208,15 @@ NearestNeighbors::fnn_linear (Point* p)
  * 
  * @param p Point to find a nearest neighbor for. 
  * @param points vector of points to find the nearest neighbor from.
+ * @param radius radius of circle where point should be located.
+ * 
+ * @return Point* pointer to the valid nearest neighbor. nullptr if none found.
  */
-void
-NearestNeighbors::fnn_linear (Point* p, std::vector<Point*> &points)
+Point*
+NearestNeighbors::fnn_sector_linear (Point* p, std::vector<Point*> &points,
+									 const float radius)
 {
+	Point* nearest_neighbor = nullptr;
 	float dist, dx, dy;
 	//Longest possible distance is the diagonal,
 	//(which is smaller than width + height).
@@ -232,11 +238,12 @@ NearestNeighbors::fnn_linear (Point* p, std::vector<Point*> &points)
 			dist = sqrtf (dx * dx + dy * dy);
 		
 		//Compare it to the shortest one.
-		if (shortest_dist > dist) {
+		if (dist <= radius && shortest_dist > dist) {
 			shortest_dist = dist;
-			p->pnearest_neighbor = point;
+			nearest_neighbor = point;
 		}
 	}
+	return nearest_neighbor;
 }
 
 /**
@@ -255,27 +262,27 @@ NearestNeighbors::fnn_linear (Point* p, std::vector<Point*> &points)
  * @par Comment
  * Might be improved by working with circle rather than with the square.
  * 
- * @param p Point to find a nearest neighbor for. 
+ * @param p Point to find a nearest neighbor for.
  */
 void
 NearestNeighbors::fnn_sector (Point* p)
 {
-	bool width_longer = this->_image_width > this->_image_height;
-	float step = width_longer ? (float)this->_image_width / _image_sector_div_coef
+	float step = (this->_image_width > this->_image_height)
+							  ? (float)this->_image_width / _image_sector_div_coef
 							  : (float)this->_image_height / _image_sector_div_coef;
-	float sector_half_width = step;
+	float max_radius = (float)this->_image_width + this->_image_height;
+	float radius = step;
 	std::vector<Point*> points_in_bounds;
 	float x_min, x_max, y_min, y_max;
 
 	//Worst case is _image_sector_div_coef runs for one point. (Isolated point)
 	//Ideally, whole while loop should run only once for every point,
 	//this will allow to significantly decrease number of computations.
-	while (sector_half_width
-		   <= (width_longer ? this->_image_width : this->_image_height)) {
-		x_min = p->x - sector_half_width;
-		x_max = p->x + sector_half_width;
-		y_min = p->y - sector_half_width;
-		y_max = p->y + sector_half_width;
+	while (radius <= max_radius) {
+		x_min = p->x - radius;
+		x_max = p->x + radius;
+		y_min = p->y - radius;
+		y_max = p->y + radius;
 		
 		//This loop checks which points were caught by square constraint.
 		//It might end up increasing number of computations if points
@@ -288,14 +295,18 @@ NearestNeighbors::fnn_sector (Point* p)
 				points_in_bounds.push_back (point);
 		}
 
-		//Found valid points. (Nearest is among those)
-		if (points_in_bounds.size ())
-			break;
+		//Found valid points. (Nearest can be among those)
+		if (points_in_bounds.size ()) {
+			Point* candidate = fnn_sector_linear (p, points_in_bounds, radius);
 
-		sector_half_width += step;
+			//If found neighbor - exit immediately.
+			if (candidate != nullptr) {
+				p->pnearest_neighbor = candidate;
+				break;
+			}
+		}
+		radius += step;
 	}
-
-	fnn_linear (p, points_in_bounds);
 }
 
 /**
