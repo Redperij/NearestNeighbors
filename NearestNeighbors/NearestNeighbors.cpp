@@ -136,8 +136,8 @@ NearestNeighbors::find_set_of_nearest_neighbors (size_t start, size_t end)
  * @par Limitations
  * Must not use any shared variables without mutex.
  * @par Comments
- * Switches between linear and sector algoritms based on number of points.
- * 
+ * Previously it switched between linear and sector algoritms, but sector algorithm
+ * appeared to be too slow, thus it is not used.
  * @param p Point to find a nearest neighbor for.
  */
 void
@@ -145,8 +145,11 @@ NearestNeighbors::find_nearest_neighbor (Point* p)
 {
 	//Choose algorithm to follow
 	//based on ammount of points to compute distance to.
+	/*
 	this->_points.size () > this->_sector_algorithm_threshold ? fnn_sector (p)
 															 : fnn_linear (p);
+	*/
+	fnn_linear(p);
 }
 
 /**

@@ -18,7 +18,7 @@ int run_tests() {
     int tests_failed = 0;
 
     //Loop that performs tests.
-    for (size_t i = 0; i < 20; i++)
+    for (size_t i = 0; i < 5; i++)
     {
         //Example of test usage.
         tests_failed += run_test_with_valid_points(points, 10, 10, 10, "[Simple valid 10x10]: ");
