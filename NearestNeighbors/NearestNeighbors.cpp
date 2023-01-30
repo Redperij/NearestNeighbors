@@ -1,8 +1,9 @@
 #include "NearestNeighbors.h"
 #include <cmath>
+#include <iostream>
 
 /**
- * @brief Construct a new NearestNeighbors::NearestNeighbors object
+ * @brief Construct a new Nearest Neighbors:: Nearest Neighbors object
  * @par Functionality
  * Constructor initialises pointer "pnearest_neighbor" of each point
  * to nullptr and finds the nearest neighbor for each valid point. 
@@ -15,7 +16,8 @@
 NearestNeighbors::NearestNeighbors (int image_width, int image_height,
 									Point* points, int number_of_points)
 	: _image_width (image_width), _image_height (image_height),
-	_number_of_points (number_of_points), _points_per_thread (50)
+	_number_of_points (number_of_points), _points_per_thread (50),
+	_sector_algorithm_threshold (30), _image_sector_div_coef(32)
 {
 
 	//Initialise all point neighbors to nullptrs.
@@ -68,10 +70,14 @@ void
 NearestNeighbors::map_nearest_neighbors ()
 {
 	size_t supported_threads = std::thread::hardware_concurrency ();
+	
+	//Uncomment to test without threads.
+	//supported_threads = 0;
 
 	//If we cannot determine ammount of threads on the CPU,
 	//it's better not to risk.
-	if (!supported_threads) {
+	//Also, don't bother with threads with small amount of points.
+	if (this->_points.size() <= _points_per_thread || !supported_threads) {
 		find_set_of_nearest_neighbors (0, this->_points.size());
 		return;
 	}
@@ -115,7 +121,7 @@ NearestNeighbors::map_nearest_neighbors ()
  * @par Limitations
  * Must not use any shared variables without mutex.
  * 
- * @param start starting poin index.
+ * @param start starting point index.
  * @param end last point index + 1.
  */
 void
@@ -130,15 +136,17 @@ NearestNeighbors::find_set_of_nearest_neighbors (size_t start, size_t end)
  * @par Limitations
  * Must not use any shared variables without mutex.
  * @par Comments
- * Previously it switched between linear and sector algoritms, but sector algorithm
- * appeared to be too slow and hard to implement, thus it was deleted.
+ * Switches between linear and sector algoritms based on number of points.
  * 
  * @param p Point to find a nearest neighbor for.
  */
 void
 NearestNeighbors::find_nearest_neighbor (Point* p)
 {
-	fnn_linear (p);
+	//Choose algorithm to follow
+	//based on ammount of points to compute distance to.
+	this->_points.size () > this->_sector_algorithm_threshold ? fnn_sector (p)
+															 : fnn_linear (p);
 }
 
 /**
@@ -157,12 +165,13 @@ NearestNeighbors::find_nearest_neighbor (Point* p)
 void
 NearestNeighbors::fnn_linear (Point* p)
 {
+	Point* nearest_neighbor = nullptr;
 	float dist, dx, dy;
 	//Longest possible distance is the diagonal,
 	//(which is smaller than width + height).
 	float shortest_dist = (float)_image_height + _image_width;
 
-	for (auto &point : this->_points) {
+	for (auto point : this->_points) {
 		//Found self.
 		if (p == point)
 			continue;
@@ -184,9 +193,137 @@ NearestNeighbors::fnn_linear (Point* p)
 		//Compare it to the shortest one.
 		if (shortest_dist > dist) {
 			shortest_dist = dist;
-			p->pnearest_neighbor = point;
+			nearest_neighbor = point;
 		}
 	}
+	this->guard.lock();
+	p->pnearest_neighbor = nearest_neighbor;
+	this->guard.unlock();
+}
+
+/**
+ * @brief Finds nearest neighbor of point using linear algorithm.
+ * @par Functionality
+ * Loops through every point in the _points vector excluding itself,
+ * determining distance to every point keeping a pointer
+ * to the point with the shortest distance.
+ * @par Limitations
+ * - Must not use much computing power.
+ * - Must not modify any shared variables except the pnearest_neighbor
+ *   of the point it received.
+ * - "points" vector must not contain the same point as "p".
+ * 
+ * @param p Point to find a nearest neighbor for. 
+ * @param points vector of points to find the nearest neighbor from.
+ * @param radius radius of circle where point should be located.
+ * 
+ * @return Point* pointer to the valid nearest neighbor. nullptr if none found.
+ */
+Point*
+NearestNeighbors::fnn_sector_linear (Point* p, Point** points,
+									 const size_t size, const float radius)
+{
+	Point* nearest_neighbor = nullptr;
+	float dist, dx, dy;
+	//Longest possible distance is the diagonal,
+	//(which is smaller than width + height).
+	float shortest_dist = (float)_image_height + _image_width;
+
+	for (size_t i = 0; i < size; i++) {
+		//Get distances for y and x coordinates.
+		dx = p->x - points[i]->x;
+		dy = p->y - points[i]->y;
+		dx = dx >= 0 ? dx : dx * -1;
+		dy = dy >= 0 ? dy : dy * -1; 
+		
+		//Get actual distance.
+		if (dx == 0)
+			dist = dy;
+		else if (dy == 0)
+			dist = dx;
+		else
+			dist = sqrtf (dx * dx + dy * dy);
+		
+		//Compare it to the shortest one.
+		if (dist <= radius && shortest_dist > dist) {
+			shortest_dist = dist;
+			nearest_neighbor = points[i];
+		}
+	}
+	return nearest_neighbor;
+}
+
+/**
+ * @brief Finds nearest neighbor of point using sector algorithm.
+ * @par Functionality
+ * Creates square frame around the point to search neighbors from and
+ * uses linear algorithm to find nearest neighbor from the points included
+ * in the frame.
+ * Expands the frame in case there are no points caught.
+ * @par Limitations
+ * - Must not use much computing power.
+ * - Must not modify any shared variables except the pnearest_neighbor
+ *   of the point it received.
+ * - Must not be used for small quantities of points. Since
+ * 	 it will have to expand frame to often for every point.
+ * @par Comment
+ * Might be improved by working with circle rather than with the square.
+ * 
+ * @param p Point to find a nearest neighbor for.
+ */
+void
+NearestNeighbors::fnn_sector (Point* p)
+{
+	float step = (this->_image_width > this->_image_height)
+							  ? (float)this->_image_width / _image_sector_div_coef
+							  : (float)this->_image_height / _image_sector_div_coef;
+	float max_radius = (float)this->_image_width + this->_image_height;
+	float radius = step;
+	Point** points_in_bounds = new Point*[this->_number_of_points];
+	size_t size_points_in_bounds = 0;
+	float x_min, x_max, y_min, y_max;
+
+	//Worst case is _image_sector_div_coef runs for one point. (Isolated point)
+	//Ideally, whole while loop should run only once for every point,
+	//this will allow to significantly decrease number of computations.
+	while (radius <= max_radius) {
+		x_min = p->x - radius;
+		x_max = p->x + radius;
+		y_min = p->y - radius;
+		y_max = p->y + radius;
+		
+		//This loop checks which points were caught by square constraint.
+		//It might end up increasing number of computations if points
+		//are located far away from each other.
+		for (size_t i = 0; i < this->_number_of_points; i++) {
+			//Found self.
+			if (p == this->_points[i])
+				continue;
+			if (point_in_bounds(this->_points[i], x_min, x_max, y_min, y_max)) {
+				points_in_bounds[size_points_in_bounds] = this->_points[i];
+				size_points_in_bounds++;
+			}
+				
+		}
+
+		//Found valid points. (Nearest can be among those)
+		if (size_points_in_bounds) {
+			Point* candidate = fnn_sector_linear (p, points_in_bounds,
+												  size_points_in_bounds, radius);
+
+			//If found neighbor - exit immediately.
+			if (candidate != nullptr) {
+				this->guard.lock();
+				p->pnearest_neighbor = candidate;
+				this->guard.unlock();
+				break;
+			}
+			size_points_in_bounds = 0;
+		}
+		radius += step;
+	}
+
+	delete[] points_in_bounds;
 }
 
 /**
