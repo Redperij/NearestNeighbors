@@ -73,7 +73,7 @@ NearestNeighbors::map_nearest_neighbors ()
 
 	//If we cannot determine ammount of threads on the CPU,
 	//it's better not to risk.
-	if (!supported_threads) {
+	if (this->_points.size() <= _points_per_thread || !supported_threads) {
 		find_set_of_nearest_neighbors (0, this->_points.size());
 		return;
 	}
