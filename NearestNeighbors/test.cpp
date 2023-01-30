@@ -17,26 +17,30 @@ int run_tests() {
     Point* points = new Point[4096];
     int tests_failed = 0;
 
-    //Example of test usage.
-    tests_failed += run_test_with_valid_points(points, 10, 10, 10, "[Simple valid 10x10]: ");
-    tests_failed += run_test(points, 4096, 4096, 4096, "[General 4096 4096x4096]: ");
-    tests_failed += run_test_with_valid_points(points, 4096, 4096, 4096, "[Valid 4096 4096x4096]: ");
-    tests_failed += run_test_with_valid_points(points, 4096, 1, 1, "[Tightly together]: ");
-    tests_failed += run_test(points, 4096, 1, 1, "[Lots of invalid]: ");
-    
-    //Example of custom test.
-    generate_valid_unique_points(points, 4095, 1, 1);
-    points[4095].x = 4095;
-    points[4095].y = 4095;
+    //Loop that performs tests.
+    for (size_t i = 0; i < 20; i++)
+    {
+        //Example of test usage.
+        tests_failed += run_test_with_valid_points(points, 10, 10, 10, "[Simple valid 10x10]: ");
+        tests_failed += run_test(points, 4096, 4096, 4096, "[General 4096 4096x4096]: ");
+        tests_failed += run_test_with_valid_points(points, 4096, 4096, 4096, "[Valid 4096 4096x4096]: ");
+        tests_failed += run_test_with_valid_points(points, 4096, 1, 1, "[Tightly together]: ");
+        tests_failed += run_test(points, 4096, 1, 1, "[Lots of invalid]: ");
 
-    tests_failed += run_custom_test(points, 4096, 4096, 4096, "[Tight cluster]: ");
+        //Example of custom test.
+        generate_valid_unique_points(points, 4095, 1, 1);
+        points[4095].x = 4095;
+        points[4095].y = 4095;
+
+        tests_failed += run_custom_test(points, 4096, 4096, 4096, "[Tight cluster]: ");
 
 
-    //Example 2 of custom test.
-    generate_valid_unique_points(points, 2000, 1, 1);
-    generate_valid_unique_points(&points[2000], 2096, 4096, 4096);
+        //Example 2 of custom test.
+        generate_valid_unique_points(points, 2000, 1, 1);
+        generate_valid_unique_points(&points[2000], 2096, 4096, 4096);
 
-    tests_failed += run_custom_test(points, 4096, 4096, 4096, "[Half in tight cluster]: ");
+        tests_failed += run_custom_test(points, 4096, 4096, 4096, "[Half in tight cluster]: ");
+    }
 
     delete[] points;
     return tests_failed;
