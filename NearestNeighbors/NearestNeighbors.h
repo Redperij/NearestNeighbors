@@ -37,6 +37,11 @@ private:
 	Point* fnn_sector_linear (Point* p, Point** points, 
 							  const size_t size, const float radius);
 	void fnn_sector (Point* p);
+	bool fnn_cluster (Point* p, Point** points_in_image, 
+					  const size_t size_points_in_image, 
+					  const float image_x_min, const float image_x_max, 
+					  const float image_y_min, const float image_y_max,
+					  const float orig_radius);
 	bool point_in_bounds (Point* p);
 	bool point_in_bounds (Point* p, const float min_x, const float max_x,
 						  const float min_y, const float max_y);

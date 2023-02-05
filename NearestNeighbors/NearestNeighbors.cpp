@@ -309,8 +309,15 @@ NearestNeighbors::fnn_sector (Point* p)
 				
 		}
 
+		if (radius == step
+			&& size_points_in_bounds >= this->_sector_algorithm_threshold) {
+			if (fnn_cluster(p, points_in_bounds, size_points_in_bounds,
+							x_min, x_max, y_min, y_max, radius)) {
+				break;
+			}
+		}
 		//Found valid points. (Nearest can be among those)
-		if (size_points_in_bounds) {
+		else if (size_points_in_bounds) {
 			Point* candidate = fnn_sector_linear (p, points_in_bounds,
 												  size_points_in_bounds, radius);
 
@@ -327,6 +334,73 @@ NearestNeighbors::fnn_sector (Point* p)
 	}
 
 	delete[] points_in_bounds;
+}
+
+bool
+NearestNeighbors::fnn_cluster (Point* p, Point** points_in_image, 
+							   const size_t size_points_in_image, 
+							   const float image_x_min, const float image_x_max, 
+							   const float image_y_min, const float image_y_max,
+							   const float orig_radius)
+{
+	const float image_width = image_x_max - image_x_min;
+	const float image_height = image_y_max - image_y_min;
+	bool res = false;
+	float step = (image_width > image_height)
+							  ? (float)image_width / _image_sector_div_coef
+							  : (float)image_height / _image_sector_div_coef;
+	float max_radius = (float)image_width + image_height;
+	float radius = step;
+	Point** points_in_bounds = new Point*[size_points_in_image];
+	size_t size_points_in_bounds = 0;
+	float x_min, x_max, y_min, y_max;
+
+	while (radius <= max_radius) {
+		x_min = p->x - radius;
+		x_max = p->x + radius;
+		y_min = p->y - radius;
+		y_max = p->y + radius;
+		
+		for (size_t i = 0; i < size_points_in_image; i++) {
+			if (point_in_bounds(points_in_image[i], x_min, x_max, y_min, y_max)) {
+				points_in_bounds[size_points_in_bounds] = points_in_image[i];
+				size_points_in_bounds++;
+			}
+		}
+
+		//If on the first run we encounter too many points
+		//- we run the algorithm again.
+		if (radius == step
+			&& size_points_in_bounds >= this->_sector_algorithm_threshold) {
+			if (fnn_cluster(p, points_in_bounds, size_points_in_bounds,
+							x_min, x_max, y_min, y_max, radius)) {
+				res = true;
+				break;
+			}
+		}
+		//Found valid points. (Nearest can be among those)
+		else if (size_points_in_bounds) {
+			Point* candidate = fnn_sector_linear (p, points_in_bounds,
+												  size_points_in_bounds,
+												  radius > orig_radius
+												  ? orig_radius
+												  : radius);
+
+			//If found neighbor - exit immediately.
+			if (candidate != nullptr) {
+				this->guard.lock();
+				p->pnearest_neighbor = candidate;
+				this->guard.unlock();
+				res = true;
+				break;
+			}
+			size_points_in_bounds = 0;
+		}
+		radius += step;
+	}
+
+	delete[] points_in_bounds;
+	return res;
 }
 
 /**
