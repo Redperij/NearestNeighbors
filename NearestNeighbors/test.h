@@ -18,5 +18,6 @@ void generate_valid_unique_points(Point* points, size_t size,
 void generate_unique_points(Point* points, size_t size);
 Point* shortest_dist(Point* p, std::vector<Point*> points);
 bool point_in_bounds(Point* p, size_t max_x, size_t max_y);
+float get_distance(Point* p1, Point* p2);
 
 #endif // !TEST_H_

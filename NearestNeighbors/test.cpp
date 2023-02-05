@@ -8,6 +8,9 @@
 
 using namespace std;
 
+static chrono::duration<double> total_obj_time(0);
+static chrono::duration<double> total_check_time(0);
+
 /**
  * @brief Runs created tests.
  * 
@@ -41,6 +44,13 @@ int run_tests() {
 
         tests_failed += run_custom_test(points, 4096, 4096, 4096, "[Half in tight cluster]: ");
     }
+    generate_valid_unique_points(points, 1, 4, 4);
+    tests_failed += run_test(points, 1, 4, 4, "[Single point]: ");
+
+    cout << "\n\n############################"
+            "##################################" << endl;
+    cout << "Total object time spent: " << total_obj_time.count() * 1000 << endl;
+    cout << "Total check time spent : " << total_check_time.count() * 1000 << endl;
 
     delete[] points;
     return tests_failed;
@@ -131,27 +141,32 @@ int run_custom_test(Point* points, int size, int image_width,
     end = chrono::steady_clock::now();
     time = end - start;
     cout << test_name << "Check found neighbors for " << time.count() * 1000 << " ms." << endl;
+    total_check_time += time;
 
     for (size_t i = 0; i < size; i++) {
         if (obj_neighbors[i] != check_neighbors[i]) {
             if(obj_neighbors[i] != nullptr && check_neighbors[i] != nullptr) {
                 cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y
                      << ") has different neighbors.\nObject neighbor: ("
-                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n"
-                     "Test neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y << ")" << endl;
+                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << "): "
+                     << get_distance(&points[i], obj_neighbors[i])
+                     << "\nTest neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y
+                     << "): " << get_distance(&points[i], check_neighbors[i]) << endl;
                 missmatch_count++;
             }
             else if (obj_neighbors[i] != nullptr) {
-                cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y <<
-                     ") has different neighbors.\nObject neighbor: ("
-                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y << ")\n"
-                     "Test neighbor  : Gave a nullptr" << endl;
+                cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y
+                     << ") has different neighbors.\nObject neighbor: ("
+                     << obj_neighbors[i]->x << "; " << obj_neighbors[i]->y
+                     << "): " << get_distance(&points[i], obj_neighbors[i])
+                     << "\nTest neighbor  : Gave a nullptr" << endl;
                 missmatch_count++;
             }
             else {
-                cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y <<
-                     ") has different neighbors.\nObject neighbor: Gave a nullptr\n"
-                     "Test neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y << ")" << endl;
+                cout << test_name << "MISMATCH: Point (" << points[i].x << "; " << points[i].y
+                     << ") has different neighbors.\nObject neighbor: Gave a nullptr"
+                     "\nTest neighbor  : (" << check_neighbors[i]->x << "; " << check_neighbors[i]->y
+                     << "): " << get_distance(&points[i], check_neighbors[i]) << endl;
                 missmatch_count++;
             }
             
@@ -167,6 +182,8 @@ int run_custom_test(Point* points, int size, int image_width,
     else
         cout << test_name << "Test successful.\nTotal time spent: "
         << total_time.count() * 1000 << " ms" << endl;
+
+    total_obj_time += total_time;
 
     delete[] obj_neighbors;
     delete[] check_neighbors;
@@ -257,4 +274,24 @@ bool point_in_bounds(Point* p, size_t max_x, size_t max_y) {
 		|| p->y < 0 || p->y >= max_y)
 		return false;
 	return true;
+}
+
+float get_distance(Point* p1, Point* p2) {
+    float dx = 0;
+    float dy = 0;
+    float dist = 0;
+    //Get distances for y and x coordinates.
+	dx = p1->x - p2->x;
+	dy = p1->y - p2->y;
+	dx = dx >= 0 ? dx : dx * -1;
+	dy = dy >= 0 ? dy : dy * -1; 
+	
+	//Get actual distance.
+	if (dx == 0)
+		dist = dy;
+	else if (dy == 0)
+		dist = dx;
+	else
+		dist = sqrtf(dx * dx + dy * dy);
+    return dist;
 }
